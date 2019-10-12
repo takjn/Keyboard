@@ -5,7 +5,7 @@
 const int rowNum = 6;
 const int colNum = 12;
 
-const int rowPin[rowNum] = { 5, 1, 0, 2, 3, 4 };
+const int rowPin[rowNum] = {  1, 0, 2, 3, 4, 5 };
 const int colPin[colNum] = { 10, 16, 9, 8, 7, 6, 21, 20, 19, 18, 15, 14 };
 
 // Key map definition
