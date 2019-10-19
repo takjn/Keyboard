@@ -88,7 +88,7 @@ func main() {
 
 					// Check modifier key
 					if scanCode >= 0xe0 && scanCode <= 0xe7 {
-						shift := 0b111
+						shift := scanCode & 0b111
 						mask := byte(1 << shift)
 						modifier = modifier | mask
 					}
