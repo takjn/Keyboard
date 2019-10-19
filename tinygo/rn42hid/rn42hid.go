@@ -6,7 +6,6 @@
 package rn42hid
 
 import (
-	"fmt"
 	"machine"
 )
 
@@ -48,7 +47,9 @@ func (d Device) Send(cmd string) error {
 // See 5.3.3 Raw Report Mode in datasheet.
 func (d Device) SendKeyboardReport(data []byte, modifier byte) error {
 	if len(data) != 6 {
-		return fmt.Errorf("length of data should be 6")
+		return nil
+		// TODO return error
+		// return fmt.Errorf("length of data should be 6")
 	}
 
 	header := []byte{0xFD, 0x09, 0x01, modifier, 0x00}

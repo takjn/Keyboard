@@ -1,3 +1,5 @@
+// github.com/takjn/tinygo version 0.10.0-dev linux/amd64 (using go version go1.13.3)
+//
 // tinygo flash -target=arduino -port /dev/ttyUSB0 ./main.go
 // screen /dev/ttyUSB0 115200
 // cat /dev/ttyUSB0 | od -tx1z -Ax
@@ -5,10 +7,11 @@ package main
 
 import (
 	"time"
-	"tinygo/keyboard/rn42hid"
-	"tinygo/keyboard/rn42hid/key"
 
 	"machine"
+
+	"github.com/takjn/Keyboard/tinygo/rn42hid"
+	"github.com/takjn/Keyboard/tinygo/rn42hid/key"
 )
 
 var (
@@ -85,8 +88,7 @@ func main() {
 
 					// Check modifier key
 					if scanCode >= 0xe0 && scanCode <= 0xe7 {
-						// FIXME: tinygo doesn't support binary litral yet
-						shift := scanCode & 7 // 0b111 = 7
+						shift := 0b111
 						mask := byte(1 << shift)
 						modifier = modifier | mask
 					}
@@ -96,8 +98,8 @@ func main() {
 						scanCodes[idx] = scanCode
 						idx++
 					} else {
-						for s := range scanCodes {
-							s = key.ERROVF
+						for i := 0; i < len(scanCodes); i++ {
+							scanCodes[idx] = key.ERROVF
 						}
 					}
 				}
