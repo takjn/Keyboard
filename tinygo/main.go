@@ -17,8 +17,8 @@ import (
 var (
 	device rn42hid.Device
 
-	row = []machine.Pin{14, 15, 16, 17, 18, 19}
-	col = []machine.Pin{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}
+	row = []machine.Pin{8, 9, 10, 11, 12, 13}
+	col = []machine.Pin{19, 18, 17, 16, 15, 14, 7, 6, 5, 4, 3, 2}
 
 	keyMap = [2][6][12]byte{
 		{
