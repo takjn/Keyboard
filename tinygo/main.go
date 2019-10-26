@@ -1,4 +1,4 @@
-// github.com/takjn/tinygo version 0.10.0-dev linux/amd64 (using go version go1.13.3)
+// github.com/tinygo-org/tinygo version 0.10.0-dev linux/amd64 (using go version go1.13.3)
 //
 // tinygo flash -target=arduino -port /dev/ttyUSB0 ./main.go
 // screen /dev/ttyUSB0 115200
@@ -15,11 +15,13 @@ import (
 )
 
 var (
-	device rn42hid.Device
+	hid rn42hid.Device
 
-	row = []machine.Pin{8, 9, 10, 11, 12, 13}
-	col = []machine.Pin{19, 18, 17, 16, 15, 14, 7, 6, 5, 4, 3, 2}
+	// pin assignment
+	row = [6]machine.Pin{8, 9, 10, 11, 12, 13}
+	col = [12]machine.Pin{19, 18, 17, 16, 15, 14, 7, 6, 5, 4, 3, 2}
 
+	// key mapping
 	keyMap = [2][6][12]byte{
 		{
 			{key.NONE, key.NONE, key.APOSTROPHE, key.LEFTBRACE, key.MINUS, key.GRAVE, key.BACKSLASH, key.EQUAL, key.RIGHTBRACE, key.SLASH, key.NONE, key.NONE},
@@ -38,6 +40,9 @@ var (
 			{key.LEFTCTRL, key.SYSRQ, key.LEFTMETA, key.LEFTALT, key.NONE, key.SPACE, key.SPACE, key.NONE, key.COMPOSE, key.HOME, key.PAGEDOWN, key.END},
 		},
 	}
+
+	// layer holds the current key map layer (0 or 1)
+	layer = 0
 )
 
 func init() {
@@ -48,7 +53,7 @@ func init() {
 		RX:       machine.UART_RX_PIN,
 	}
 	machine.UART0.Configure(config)
-	device = rn42hid.New(machine.UART0)
+	hid = rn42hid.New(machine.UART0)
 
 	// Set up pins
 	for _, r := range row {
@@ -61,75 +66,78 @@ func init() {
 	}
 }
 
-func main() {
-	// lastScanCodes hold the last scan codes to detect key press and key release
-	lastScanCodes := []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+// readKeyMatrix gets 6 key scan codes
+func readKeyMatrix() ([6]byte, byte) {
+	scanCodes := [6]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+	var idx int
+	var modifier byte
+	var layerSwitch = false
 
-	// layer holds the current key map layer (0 or 1)
-	layer := 0
+	// Read key matrix
+	for i, r := range row {
+		r.Low()
+		for j, c := range col {
+			// A pin is pulled up (set high) by default.
+			// It should be false (low) when the key is pressed.
+			if c.Get() == true {
+				continue
+			}
 
-	for {
-		// Scan codes - RN42 has 6 slots in the HID report
-		scanCodes := []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
-		var idx int
-		var modifier byte
-		var layerSwitch = false
+			// Get the scan code
+			scanCode := keyMap[layer][i][j]
 
-		// Read key matrix
-		for i, r := range row {
-			r.Low()
-			for j, c := range col {
-				scanCode := keyMap[layer][i][j]
-				if c.Get() == false {
-					// Check layer key
-					if scanCode == key.NONE {
-						layerSwitch = true
-					}
+			// Check layer key is pressed
+			if scanCode == key.NONE {
+				layerSwitch = true
+			}
 
-					// Check modifier key
-					if scanCode >= 0xe0 && scanCode <= 0xe7 {
-						shift := scanCode & 0b111
-						mask := byte(1 << shift)
-						modifier = modifier | mask
-					}
+			// Check modifier key is pressed
+			if scanCode >= 0xe0 && scanCode <= 0xe7 {
+				shift := scanCode & 0b111
+				mask := byte(1 << shift)
+				modifier = modifier | mask
+			}
 
-					// Key press
-					if idx < len(scanCodes) {
-						scanCodes[idx] = scanCode
-						idx++
-					} else {
-						for i := 0; i < len(scanCodes); i++ {
-							scanCodes[idx] = key.ERROVF
-						}
-					}
+			// Set the scan code
+			if idx < len(scanCodes) {
+				scanCodes[idx] = scanCode
+				idx++
+			} else {
+				for i := 0; i < len(scanCodes); i++ {
+					scanCodes[idx] = key.ERROVF
 				}
 			}
-			r.High()
 		}
+		r.High()
+	}
+
+	// Set layer
+	if layerSwitch {
+		layer = 1
+	} else {
+		layer = 0
+	}
+
+	return scanCodes, modifier
+}
+
+func main() {
+	// lastScanCodes hold the last scan codes to detect key press and key release
+	lastScanCodes := [6]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+
+	for {
+		// Get scan codes - RN42 has 6 slots in the HID report
+		scanCodes, modifier := readKeyMatrix()
 
 		// Send scan codes if the scan codes is different from the last data.
-		// TODO: compare array
-		changed := false
-		for i := 0; i < len(lastScanCodes); i++ {
-			if lastScanCodes[i] != scanCodes[i] {
-				changed = true
-			}
-			lastScanCodes[i] = scanCodes[i]
-		}
-		if changed {
-			err := device.SendKeyboardReport(scanCodes, modifier)
-			if err != nil {
+		if lastScanCodes != scanCodes {
+			if err := hid.SendKeyboardReport(scanCodes[:], modifier); err != nil {
 				println(err.Error())
 			}
 		}
+		lastScanCodes = scanCodes
 
-		// Set layer
-		if layerSwitch {
-			layer = 1
-		} else {
-			layer = 0
-		}
-
+		// wait to avoid key chattering
 		time.Sleep(time.Millisecond * 5)
 	}
 }
