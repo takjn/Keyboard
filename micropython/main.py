@@ -129,6 +129,6 @@ def main():
             print(scan_codes, modifier)
         last_scan_codes = scan_codes
 
-        pyb.delay(5)
+        # pyb.delay(5)
 
 main()
