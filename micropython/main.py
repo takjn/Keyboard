@@ -53,7 +53,7 @@ class Keyboard:
             r = Pin(row, Pin.OUT)
             r.off()
 
-            # workaround for GR-CITRUS
+            # workaround for MicroPython v1.9.4-1354-gebbaac271-dirty on 2019-11-24; GR-CITRUS with RX631
             if (row == 'PIN5'):
                 p = Pin('PIN5_A', Pin.OUT)
                 p.off()
