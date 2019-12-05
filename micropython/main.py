@@ -93,13 +93,13 @@ class Keyboard:
                 # print("row: {}, col: {}".format(i, j))
             r.on()
 
-        # workaround for MicroPython v1.9.4-1354-gebbaac271-dirty on 2019-11-24; GR-CITRUS with RX631
-        if (row == 'PIN5'):
-            p = Pin('PIN5_A', Pin.OUT)
-            p.on()
-        if (row == 'PIN6'):
-            p = Pin('PIN6_A', Pin.OUT)
-            p.on()
+            # workaround for MicroPython v1.9.4-1354-gebbaac271-dirty on 2019-11-24; GR-CITRUS with RX631
+            if (row == 'PIN5'):
+                p = Pin('PIN5_A', Pin.OUT)
+                p.on()
+            if (row == 'PIN6'):
+                p = Pin('PIN6_A', Pin.OUT)
+                p.on()
 
         # Set layer
         if layer_switch:
