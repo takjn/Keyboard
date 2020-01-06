@@ -1,7 +1,8 @@
 from machine import Pin
 from machine import UART
 from key import Key
-from rn42 import RN42
+# from rn42 import RN42
+from usb import USB
 
 
 class Keyboard:
@@ -111,8 +112,10 @@ class Keyboard:
 
 
 def main():
-    uart = UART(0, 115200)
-    hid = RN42(uart)
+    # uart = UART(0, 115200)
+    # hid = RN42(uart)
+    usb_hid = pyb.USB_HID()
+    hid = USB(usb_hid)
 
     k = Keyboard()
 
@@ -127,7 +130,7 @@ def main():
             hid.send_keyboard_report(scan_codes, modifier)
             print(scan_codes, modifier)
         last_scan_codes = scan_codes
-
+        
         # pyb.delay(5)
 
 
