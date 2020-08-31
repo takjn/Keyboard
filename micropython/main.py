@@ -46,6 +46,7 @@ class Keyboard:
 
     def read_matrix(self):
         scan_codes = bytearray(b'\x00\x00\x00\x00\x00\x00')
+        scan_code_length = len(scan_codes)
         idx = 0
         modifier = 0
         layer_switch = False
@@ -84,7 +85,7 @@ class Keyboard:
                     modifier = modifier | mask
 
                 # Set the scan code
-                if idx < len(scan_codes):
+                if idx < scan_code_length:
                     scan_codes[idx] = scan_code
                     idx += 1
                 else:
@@ -121,17 +122,19 @@ def main():
 
     # last_scan_codes hold the last scan codes to detect key press and key release
     last_scan_codes = bytearray(b'\x00\x00\x00\x00\x00\x00')
+    last_modifier = 0
 
     while 1:
         scan_codes, modifier = k.read_matrix()
 
         # Send scan codes if the scan codes is different from the last data.
-        if last_scan_codes != scan_codes:
+        if last_scan_codes != scan_codes or last_modifier != modifier:
             hid.send_keyboard_report(scan_codes, modifier)
-            print(scan_codes, modifier)
-        last_scan_codes = scan_codes
-        
-        # pyb.delay(5)
+            last_scan_codes = scan_codes
+            last_modifier = modifier
+            # print(scan_codes, modifier)
+
+        pyb.delay(1)
 
 
 main()
